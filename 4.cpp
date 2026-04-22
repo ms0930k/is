@@ -1,27 +1,27 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-long long gcd(long long a, long long b) {
+// Function to calculate gcd
+int gcd(int a, int b) {
     if (b == 0) return a;
     return gcd(b, a % b);
 }
 
-long long power_mod(long long base, long long exp, long long mod) {
-    long long result = 1;
-    base = base % mod;
-
+// Fast modular exponentiation
+long long mod_exp(long long base, long long exp, long long mod) {
+    long long res = 1;
     while (exp > 0) {
         if (exp % 2 == 1)
-            result = (result * base) % mod;
-
+            res = (res * base) % mod;
         base = (base * base) % mod;
         exp /= 2;
     }
-    return result;
+    return res;
 }
 
-long long mod_inverse(long long e, long long phi) {
-    for (long long d = 1; d < phi; d++) {
+// Modular inverse using brute (ok for small values)
+int mod_inverse(int e, int phi) {
+    for (int d = 1; d < phi; d++) {
         if ((e * d) % phi == 1)
             return d;
     }
@@ -29,44 +29,56 @@ long long mod_inverse(long long e, long long phi) {
 }
 
 int main() {
-    long long p = 61, q = 53;
-    long long n = p * q;
-    long long phi = (p - 1) * (q - 1);
-    long long e = 17;
-    if (gcd(e, phi) != 1) {
-        cout << "Invalid e value!" << endl;
-        return 0;
-    }
+    // Step 1: Choose 2 primes
+    int p = 61, q = 53;
 
-    long long d = mod_inverse(e, phi); 
+    // Step 2: Compute n and phi
+    int n = p * q;
+    int phi = (p - 1) * (q - 1);
 
-    cout << "Public Key (e, n): (" << e << ", " << n << ")" << endl;
-    cout << "Private Key (d, n): (" << d << ", " << n << ")" << endl;
+    // Step 3: Choose e
+    int e = 17;
+    while (gcd(e, phi) != 1) e++;
 
-    // File input
+    // Step 4: Compute d
+    int d = mod_inverse(e, phi);
+
+    cout << "Public Key (e, n): (" << e << ", " << n << ")\n";
+    cout << "Private Key (d, n): (" << d << ", " << n << ")\n";
+
+    // Step 5: Read input file
     ifstream fin("input.txt");
-    ofstream fout_enc("encrypted.txt");
-    ofstream fout_dec("decrypted.txt");
+    ofstream fout("encrypted.txt");
 
     string text;
     getline(fin, text);
 
-    vector<long long> encrypted;
-    for (char c : text) {
-        long long enc = power_mod((int)c, e, n);
-        encrypted.push_back(enc);
-        fout_enc << enc << " ";
-    }
-    for (long long val : encrypted) {
-        char dec = (char)power_mod(val, d, n);
-        fout_dec << dec;
+    // Step 6: Encrypt
+    for (char ch : text) {
+        int m = (int)ch;
+        long long c = mod_exp(m, e, n);
+        fout << c << " ";
     }
 
     fin.close();
-    fout_enc.close();
+    fout.close();
+
+    cout << "Encryption done -> encrypted.txt\n";
+
+    // Step 7: Decrypt
+    ifstream fin_enc("encrypted.txt");
+    ofstream fout_dec("decrypted.txt");
+
+    long long num;
+    while (fin_enc >> num) {
+        long long m = mod_exp(num, d, n);
+        fout_dec << (char)m;
+    }
+
+    fin_enc.close();
     fout_dec.close();
 
-    cout << "\nEncryption & Decryption done. Check files." << endl;
+    cout << "Decryption done -> decrypted.txt\n";
 
     return 0;
 }
